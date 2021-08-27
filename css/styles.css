@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css?family=Audiowide|Press+Start+2P');
+
+body {
+	width:600px;
+	margin:0 auto;
+	background-color: blue
+}
+
+h1 {
+	font-family: 'Press Start 2P', cursive;
+	text-align:center;
+	color: yellow;
+}
+
+#miCanvas {
+	border:dotted 2px yellow;
+	background:black;	
+}
