@@ -12,7 +12,7 @@ h1 {
 	color: yellow;
 }
 
-#miCanvas {
+#board {
 	border:dotted 2px yellow;
 	background:black;	
 }

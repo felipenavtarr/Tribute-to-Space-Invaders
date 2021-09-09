@@ -1,136 +1,70 @@
 var canvas, ctx;
-var x = 100;
-var y = 100;
-var dx_nave = 10;
-var dy_bala = 4;
+
+var dx_player = 10;
+var player_image_path = "img/torre.fw.png";
+
+var dy_fire = 4;
+var colorFire = "red";
+
+var dx_enemy1 = 5;
+var enemy1_image_path = "img/invader.fw.png";
+
 var KEY_ENTER = 13;
 var KEY_LEFT = 37;
 var KEY_UP = 38;
 var KEY_RIGHT = 39;
 var KEY_DOWN = 40;
 var BARRA = 32;
-var imagen, imagenEnemigo;
 
 var teclaPulsada = null;
 var tecla = [];
-var colorBala = "red";
-var balas_array = new Array();
+
+var fire_array = new Array();
 var enemigos_array = new Array();
 
-/*******************************************************
- *********************  OBJETOS ************************
- ******************************************************/
 
-function Bala(x,y,w) {
-    this.x = x;
-    this.y = y;
-    this.w = w;
-    this.dibuja = function(){
-        ctx.save();
-        ctx.fillStyle = colorBala;
-        ctx.fillRect(this.x, this.y, this.w, this.w);
-        this.y -= dy_bala;
-        ctx.restore();
-    };
+function animate() {
+	requestAnimationFrame(animate);
+	verify();
+	render();
 }
 
-function Jugador(x) {
-    this.x = x;
-    this.y = 450;
-    this.dibuja = function(x) {
-        this.x = x;
-        ctx.drawImage(imagen, this.x, this.y, 30, 15);
-    };
-}
-
-function Enemigo(x,y) {
-    this.x = x;
-    this.y = y;
-    this.w = 35;
-    this.veces = 0;
-    this.dx = 5;
-    this.ciclos = 0;
-    this.num = 14;
-    this.figura = true;
-    this.vive = true;
-
-    this.dibuja = function() {
-        // retraso
-        if (this.ciclos > 30) {
-            // saltos
-            if (this.veces > this.num) {
-                this.dx *= -1;
-                this.veces = 0;
-                this.num = 28;
-                this.y += 20;
-                this.dx = (this.dx>0)?this.dx++:this.dx--;
-            } else {
-                this.x += this.dx; 
-            }
-            this.veces++;
-            this.ciclos = 0;
-            this.figura = !this.figura;
-        } else {
-            this.ciclos++;
-        }
-
-        if (this.figura) {
-            ctx.drawImage(imagenEnemigo, 0, 0, 40, 30, this.x, this.y, 35, 30);
-        } else {
-            ctx.drawImage(imagenEnemigo, 50, 0, 35, 30, this.x, this.y, 35, 30);
-        }
-        //this.figura = !this.figura;
-    };
-}
-/******************* FIN OBJETOS *************************/
-
-function anima() {
-	requestAnimationFrame(anima);
-	verifica();
-	pinta();
-}
-
-function verifica() {
+function verify() {
     if (tecla[KEY_RIGHT]) {
-        x += dx_nave;
+        player.moveRight();
     }
     if (tecla[KEY_LEFT]) {
-        x -= dx_nave;
+        player.moveLeft();
     }
 
-    // Colisiones del cañón con paredes laterales
-    if (x>canvas.width-imagen.width) {
-        x = canvas.width-imagen.width;
-    }
-    if (x<0) {
-        x = 0;
-    }
+    // Player ship - board walls collisions
+    player.checkWallCollisions(canvas.width);
 
-    // Disparo
+    // Fire
     if (tecla[BARRA]) {
-        balas_array.push(new Bala(jugador.x+12, jugador.y-3, 5));
+        fire_array.push(new Fire(player.getX()+12, player.getY()-3, 5, dy_fire, colorFire));
         tecla[BARRA] = false;
     }
 }
 
-function pinta() {
+function render() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-    jugador.dibuja(x);
+    player.draw(ctx);
     
-    // las balas
-    for (var i=0; i<balas_array.length; i++) {
-        if (balas_array[i] != null) {
-            balas_array[i].dibuja();
+    // fire
+    for (let i=0; i<fire_array.length; i++) {
+        if (fire_array[i] != null) {
+            fire_array[i].draw(ctx);
             // si sale de la pantalla, se elimina de la colección.
-            if (balas_array[i].y<0) {
-                balas_array[i] = null;
+            if (fire_array[i].y<0) {
+                fire_array[i] = null;
             }
         }
     }
 
-    // las naves enemigas
-    for (var i=0; i<enemigos_array.length; i++) {
-        enemigos_array[i].dibuja();
+    // the enemy ships
+    for (let i=0; i<enemigos_array.length; i++) {
+        enemigos_array[i].draw(ctx);
     }
 }
 
@@ -155,33 +89,24 @@ document.addEventListener("keyup", function(e) {
 })(); */
 
 window.onload = function(){
-	canvas = document.getElementById("miCanvas");
+	canvas = document.getElementById("board");
 	if(canvas && canvas.getContext){
 		ctx = canvas.getContext("2d");
-		if(ctx){
-            x = canvas.width/2;
+		if(ctx) {
 
-            // La nave propia
-            imagen = new Image();
-            imagen.src = "img/torre.fw.png";
-            imagen.onload = function() {
-                jugador = new Jugador(0);
-                jugador.dibuja(canvas.width/2);
-                anima();
-            }
+            // The player ship
+            player = new Player(canvas.width/2, 450, dx_player, player_image_path);
+            player.draw(ctx);
+            animate();
 
-            // Las naves enemigas
-            imagenEnemigo = new Image();
-            imagenEnemigo.src = "img/invader.fw.png";
-            imagenEnemigo.onload = function() {
-                for (var i=0; i<5; i++) {
-                    for (var j=0; j<10; j++) {
-                        enemigos_array.push(new Enemigo(100+40*j, 30+45*i));
-                    }
+            // Enemy ships
+            for (var i=0; i<5; i++) {
+                for (var j=0; j<10; j++) {
+                    enemigos_array.push(new Enemy1(100+40*j, 30+45*i, dx_enemy1, enemy1_image_path));
                 }
             }
 		} else {
-			alert("Error al crear tu contexto");	
+			alert("Error in context creation");	
 		}
 	}
-}
+};
