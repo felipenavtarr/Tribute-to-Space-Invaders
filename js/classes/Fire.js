@@ -8,6 +8,10 @@ class Fire {
         this.color = color;
     }
 
+    getY() {
+        return this.y;
+    }
+
     draw(ctx) {
         ctx.save();
         ctx.fillStyle = this.color;
